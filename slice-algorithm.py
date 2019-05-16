@@ -76,6 +76,7 @@ message_dictionary = {
     "101": "Enter {0}",
     "102": "Exit {0}",
     "103": "Calculated Cost: {0}",
+    "104": "Entity id: {0}  Records: {1}",
     "199": "{0}",
     "200": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}W",
     "400": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
@@ -430,8 +431,10 @@ def do_show_entities(args):
 
     # Process lines.
 
+    counter = 0
     for item in prior_generator():
-        print(item)
+        counter += 1
+        logging.info(message_info(104, counter, item))
 
     # Epilog.
 

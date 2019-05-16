@@ -54,7 +54,6 @@
       --current-csv-file tests/test-1/r3.csv
     ```
 
-
 ## View groupings
 
 1. Gold example:
