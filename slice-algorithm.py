@@ -77,6 +77,8 @@ message_dictionary = {
     "102": "Exit {0}",
     "103": "Calculated Cost: {0}",
     "104": "Entity id: {0}  Records: {1}",
+    "105": "Variable: {0}  Value: {1}",
+    "106": "Key: {0}  Value: {1}",
     "199": "{0}",
     "200": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}W",
     "400": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
@@ -351,7 +353,7 @@ def get_generator_from_csv(csv_filename):
 # -----------------------------------------------------------------------------
 
 
-def merge_distance(prior_generator, current_generator, function_m, function_s):
+def merge_distance(prior_generator, current_generator, merge_cost_function, split_cost_function):
 
     prior_counter_dictionary = {}
     prior_generator_sizes = {}
@@ -378,6 +380,8 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
         prior_generator_sizes[prior_counter] = len(prior_items)
         for prior_item in prior_items:
             prior_counter_dictionary[prior_item] = prior_counter
+    logging.info(message_info(105, 'prior_generator_sizes', prior_generator_sizes))
+    logging.info(message_info(105, 'prior_counter_dictionary', prior_counter_dictionary))
 
     # Process items in current_generator.
 
@@ -394,21 +398,28 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
             if prior_counter_dictionary.get(current_item) not in partition_map.keys():
                 partition_map[prior_counter_dictionary.get(current_item)] = 0
             partition_map[prior_counter_dictionary.get(current_item)] += 1
+        logging.info(message_info(105, 'partition_map', partition_map))
 
         # Calculate si_cost.
 
         for key, value in partition_map.items():
+            logging.info(message_info(106, key, value))
             if prior_generator_sizes[key] > value:
-                si_cost = si_cost + function_s(value, prior_generator_sizes[key] - value)
+                si_cost = si_cost + split_cost_function(value, prior_generator_sizes[key] - value)
             prior_generator_sizes[key] -= value
+            logging.info(message_info(105, 'prior_generator_sizes', prior_generator_sizes))
 
             if total_records != 0:
-                si_cost += function_m(value, total_records)
+                si_cost += merge_cost_function(value, total_records)
             total_records += value
+            logging.info(message_info(105, 'si_cost', si_cost))
+            logging.info(message_info(105, 'total_records', total_records))
+        logging.info(message_info(105, 'final: si_cost', si_cost))
 
         # Aggregate final cost.
 
         final_cost += si_cost
+        logging.info(message_info(105, 'final_cost', final_cost))
 
     return final_cost
 
