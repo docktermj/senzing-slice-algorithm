@@ -388,10 +388,14 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
         total_records = 0
         partition_map = {}
 
+        # Populate partition_map.
+
         for current_item in current_items:
             if prior_counter_dictionary.get(current_item) not in partition_map.keys():
                 partition_map[prior_counter_dictionary.get(current_item)] = 0
             partition_map[prior_counter_dictionary.get(current_item)] += 1
+
+        # Calculate si_cost.
 
         for key, value in partition_map.items():
             if prior_generator_sizes[key] > value:
