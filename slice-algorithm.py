@@ -5,14 +5,12 @@
 # -----------------------------------------------------------------------------
 
 import argparse
+import csv
 import json
-
 import logging
 import os
 import sys
 import time
-from json.decoder import _decode_uXXXX
-from orca.cmdnames import REVIEW_CURRENT_ITEM
 
 __all__ = []
 __version__ = 1.0
@@ -337,6 +335,41 @@ def common_prolog(config):
 
 
 # -----------------------------------------------------------------------------
+# xxx
+# -----------------------------------------------------------------------------
+
+def function_m(a, b):
+    return 1
+
+def function_s(a,b):
+    return 1
+
+def get_generator_from_csv(csv_filename):
+    '''Tricky code.  Uses currying technique. Create a function for signal handling.
+       that knows about "args".
+    '''
+
+    def result_function():
+        with open(csv_filename, newline='') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+            header = next(csv_reader)
+            last_entity_id = 1
+            result = []
+            for row in csv_reader:
+                entity_id = row[0]
+                if int(entity_id) == last_entity_id:
+                    result.append(row[1])
+                else:
+                    last_entity_id = int(entity_id)
+                    yield result
+                    result = [row[1]]
+
+            yield result
+
+    return result_function
+
+
+# -----------------------------------------------------------------------------
 # Algorithm
 # -----------------------------------------------------------------------------
 
@@ -416,12 +449,14 @@ def do_test(args):
     common_prolog(config)
 
     prior_generator = get_generator_from_csv(config.get('prior_csv_file'))
-    current_generator = get_generator_from_csv(config.get('current_csv_file'))
+#     current_generator = get_generator_from_csv(config.get('current_csv_file'))
 
-    function_m = _decode_uXXXX
-    function_s = 1
+    for item in prior_generator():
+        print(item)
 
-    cost =
+
+#     cost = merge_distance(prior_generator, current_generator, function_m, function_s)
+
 
     # Epilog.
 
