@@ -33,6 +33,11 @@ MINIMUM_AVAILABLE_MEMORY_IN_GIGABYTES = 6
 # 1) Command line options, 2) Environment variables, 3) Configuration files, 4) Default values
 
 configuration_locator = {
+    "csv_file": {
+        "default": None,
+        "env": "SENZING_CSV_FILE",
+        "cli": "csv-file"
+    },
     "prior_csv_file": {
         "default": None,
         "env": "SENZING_PRIOR_CSV_FILE",
@@ -55,9 +60,12 @@ def get_parser():
     parser = argparse.ArgumentParser(prog="slice-algorithm.py", description="Test the Slice Algorithm. For more information, see https://pdfs.semanticscholar.org/ee8e/13f3f17a2660331a3a17ba8a7cfb06f9b61d.pdf")
     subparsers = parser.add_subparsers(dest='subcommand', help='Subcommands (SENZING_SUBCOMMAND):')
 
-    subparser_1 = subparsers.add_parser('test', help='Test algorithm.')
-    subparser_1.add_argument("--prior-csv-file", dest="prior_csv_file", metavar="SENZING_PRIOR_CSV_FILE", help="Earlier of the CSV files.")
-    subparser_1.add_argument("--current-csv-file", dest="current_csv_file", metavar="SENZING_CURRENT_CSV_FILE", help="Later of the CSV files")
+    subparser_1 = subparsers.add_parser('show-entities', help='Test algorithm.')
+    subparser_1.add_argument("--csv-file", dest="csv_file", metavar="SENZING_CSV_FILE", help="CSV file.")
+
+    subparser_2 = subparsers.add_parser('test', help='Test algorithm.')
+    subparser_2.add_argument("--prior-csv-file", dest="prior_csv_file", metavar="SENZING_PRIOR_CSV_FILE", help="Earlier of the CSV files.")
+    subparser_2.add_argument("--current-csv-file", dest="current_csv_file", metavar="SENZING_CURRENT_CSV_FILE", help="Later of the CSV files")
 
     return parser
 
@@ -333,16 +341,18 @@ def common_prolog(config):
 
     logging.info(entry_template(config))
 
-
 # -----------------------------------------------------------------------------
 # xxx
 # -----------------------------------------------------------------------------
 
+
 def function_m(a, b):
     return 1
 
-def function_s(a,b):
+
+def function_s(a, b):
     return 1
+
 
 def get_generator_from_csv(csv_filename):
     '''Tricky code.  Uses currying technique. Create a function for signal handling.
@@ -368,10 +378,10 @@ def get_generator_from_csv(csv_filename):
 
     return result_function
 
-
 # -----------------------------------------------------------------------------
 # Algorithm
 # -----------------------------------------------------------------------------
+
 
 def merge_distance(prior_generator, current_generator, function_m, function_s):
 
@@ -397,7 +407,7 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
     # Process items in prior_generator.
 
     prior_counter = 0
-    for prior_items in prior_generator:
+    for prior_items in prior_generator():
         prior_counter += 1
         prior_generator_sizes[prior_counter] = len(prior_items)
         for prior_item in prior_items:
@@ -406,28 +416,27 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
     # Process items in current_generator.
 
     current_counter = 0
-    for current_items in current_generator:
+    for current_items in current_generator():
         current_counter += 1
         partition_map = {}
         for current_item in current_items:
-            if prior_counter_dictionary.get(item) not in partition_map.keys():
-                partition_map[m_dictionary.get(item)] = 0
-            partition_map[m_dictionary.get(item)] += 1
+            if prior_counter_dictionary.get(current_item) not in partition_map.keys():
+                partition_map[prior_counter_dictionary.get(current_item)] = 0
+            partition_map[prior_counter_dictionary.get(current_item)] += 1
 
         si_cost = 0
         total_records = 0
 
         for key, value in partition_map.items():
             if prior_generator_sizes[key] > value:
-                si_cost = si_cost + function_s(count, prior_generator_sizes[key] - count)
+                si_cost = si_cost + function_s(value, prior_generator_sizes[key] - value)
             prior_generator_sizes[key] -= value
 
             if total_records != 0:
                 si_cost += function_m(value, total_records)
-            total_records +=  value
+            total_records += value
 
         final_cost += si_cost
-
 
     return final_cost
 
@@ -435,6 +444,31 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
 # do_* functions
 #   Common function signature: do_XXX(args)
 # -----------------------------------------------------------------------------
+
+
+def do_show_entities(args):
+    '''Read from URL-addressable file.'''
+
+    # Get context from CLI, environment variables, and ini files.
+
+    config = get_configuration(args)
+
+    # Perform common initialization tasks.
+
+    common_prolog(config)
+
+    # Create generator.
+
+    prior_generator = get_generator_from_csv(config.get('csv_file'))
+
+    # Process lines.
+
+    for item in prior_generator():
+        print(item)
+
+    # Epilog.
+
+    logging.info(exit_template(config))
 
 
 def do_test(args):
@@ -448,20 +482,20 @@ def do_test(args):
 
     common_prolog(config)
 
+    # Create generators.
+
     prior_generator = get_generator_from_csv(config.get('prior_csv_file'))
-#     current_generator = get_generator_from_csv(config.get('current_csv_file'))
+    current_generator = get_generator_from_csv(config.get('current_csv_file'))
 
-    for item in prior_generator():
-        print(item)
+    # Calculate cost.
 
+    cost = merge_distance(prior_generator, current_generator, function_m, function_s)
 
-#     cost = merge_distance(prior_generator, current_generator, function_m, function_s)
-
+    print(cost)
 
     # Epilog.
 
     logging.info(exit_template(config))
-
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
