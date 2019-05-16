@@ -15,7 +15,7 @@ import time
 __all__ = []
 __version__ = 1.0
 __date__ = '2018-10-29'
-__updated__ = '2019-05-15'
+__updated__ = '2019-05-16'
 
 SENZING_PRODUCT_ID = "9999"  # See https://github.com/Senzing/knowledge-base/blob/master/lists/senzing-product-ids.md
 log_format = '%(asctime)s %(message)s'
@@ -377,7 +377,7 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
         prior_counter += 1
         prior_generator_sizes[prior_counter] = len(prior_items)
         for prior_item in prior_items:
-            prior_counter_dictionary[str(prior_item)] = prior_counter
+            prior_counter_dictionary[prior_item] = prior_counter
 
     # Process items in current_generator.
 
