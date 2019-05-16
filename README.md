@@ -53,3 +53,42 @@
       --prior-csv-file tests/test-1/Gold.csv \
       --current-csv-file tests/test-1/r3.csv
     ```
+
+
+## View groupings
+
+1. Gold example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    python slice-algorithm.py show-entities \
+      --csv-file tests/test-1/Gold.csv
+    ```
+
+1. R1 example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    python slice-algorithm.py show-entities \
+      --csv-file tests/test-1/r1.csv
+    ```
+
+1. R2 example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    python slice-algorithm.py show-entities \
+      --csv-file tests/test-1/r2.csv
+    ```
+
+1. R3 example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    python slice-algorithm.py show-entities \
+      --csv-file tests/test-1/r3.csv
+    ```
