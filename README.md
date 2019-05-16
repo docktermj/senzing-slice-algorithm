@@ -24,7 +24,27 @@
 
 ## Run
 
-1. Example:
+1. Gold vs. R1 example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    python slice-algorithm.py test \
+      --prior-csv-file tests/test-1/Gold.csv \
+      --current-csv-file tests/test-1/r1.csv
+    ```
+
+1. Gold vs. R2 example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    python slice-algorithm.py test \
+      --prior-csv-file tests/test-1/Gold.csv \
+      --current-csv-file tests/test-1/r2.csv
+    ```
+
+1. Gold vs. R3 example:
 
     ```console
     cd ${GIT_REPOSITORY_DIR}

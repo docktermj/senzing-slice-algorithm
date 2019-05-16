@@ -237,10 +237,6 @@ def get_configuration(args):
         integer_string = result.get(integer)
         result[integer] = int(integer_string)
 
-    # Initialize counters.
-
-    result['counter_processed_records'] = 0
-
     return result
 
 
