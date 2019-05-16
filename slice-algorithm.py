@@ -20,15 +20,6 @@ __updated__ = '2019-05-15'
 SENZING_PRODUCT_ID = "9999"  # See https://github.com/Senzing/knowledge-base/blob/master/lists/senzing-product-ids.md
 log_format = '%(asctime)s %(message)s'
 
-# Working with bytes.
-
-KILOBYTES = 1024
-MEGABYTES = 1024 * KILOBYTES
-GIGABYTES = 1024 * MEGABYTES
-
-MINIMUM_TOTAL_MEMORY_IN_GIGABYTES = 8
-MINIMUM_AVAILABLE_MEMORY_IN_GIGABYTES = 6
-
 # The "configuration_locator" describes where configuration variables are in:
 # 1) Command line options, 2) Environment variables, 3) Configuration files, 4) Default values
 
@@ -84,6 +75,7 @@ message_dictionary = {
     "100": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}I",
     "101": "Enter {0}",
     "102": "Exit {0}",
+    "103": "Calculated Cost: {0}",
     "199": "{0}",
     "200": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}W",
     "400": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
@@ -283,22 +275,6 @@ def validate_configuration(config):
 # -----------------------------------------------------------------------------
 
 
-def create_signal_handler_function(args):
-    '''Tricky code.  Uses currying technique. Create a function for signal handling.
-       that knows about "args".
-    '''
-
-    def result_function(signal_number, frame):
-        logging.info(message_info(102, args))
-        sys.exit(0)
-
-    return result_function
-
-
-def bootstrap_signal_handler(signal, frame):
-    sys.exit(0)
-
-
 def entry_template(config):
     '''Format of entry message.'''
     config['start_time'] = time.time()
@@ -334,35 +310,31 @@ def exit_silently():
 
 
 def common_prolog(config):
-
     validate_configuration(config)
-
-    # Prolog.
-
     logging.info(entry_template(config))
 
 # -----------------------------------------------------------------------------
-# xxx
+# Utility functions for algorithm
 # -----------------------------------------------------------------------------
 
 
 def function_m(a, b):
-    return 1
+    return a * b
 
 
 def function_s(a, b):
-    return 1
+    return a * b
 
 
 def get_generator_from_csv(csv_filename):
-    '''Tricky code.  Uses currying technique. Create a function for signal handling.
-       that knows about "args".
+    '''Tricky code.  Uses currying technique. Create a generator function
+       that reads a CSV file and yields list of records for the same entity.
     '''
 
     def result_function():
         with open(csv_filename, newline='') as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-            header = next(csv_reader)
+            header = next(csv_reader)  # Read and discard CSV header.
             last_entity_id = 1
             result = []
             for row in csv_reader:
@@ -373,7 +345,6 @@ def get_generator_from_csv(csv_filename):
                     last_entity_id = int(entity_id)
                     yield result
                     result = [row[1]]
-
             yield result
 
     return result_function
@@ -390,19 +361,17 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
     final_cost = 0
 
     # Translation
-
-#    i = prior_counter
-#    R = prior_generator
-#    r = prior_item
-#    M = prior_counter_dictionary
-#    Rsizes = prior_generator_sizes
-#    cost = final_cost
-
-#    S = current_generator
-#    pMap = partition_map
-#    r = current_item
-#    SiCost = si_cost
-#    totalRecs = total_records
+    # i = prior_counter
+    # R = prior_generator
+    # r = prior_item
+    # M = prior_counter_dictionary
+    # Rsizes = prior_generator_sizes
+    # cost = final_cost
+    # S = current_generator
+    # pMap = partition_map
+    # r = current_item
+    # SiCost = si_cost
+    # totalRecs = total_records
 
     # Process items in prior_generator.
 
@@ -418,14 +387,14 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
     current_counter = 0
     for current_items in current_generator():
         current_counter += 1
+        si_cost = 0
+        total_records = 0
         partition_map = {}
+
         for current_item in current_items:
             if prior_counter_dictionary.get(current_item) not in partition_map.keys():
                 partition_map[prior_counter_dictionary.get(current_item)] = 0
             partition_map[prior_counter_dictionary.get(current_item)] += 1
-
-        si_cost = 0
-        total_records = 0
 
         for key, value in partition_map.items():
             if prior_generator_sizes[key] > value:
@@ -435,6 +404,8 @@ def merge_distance(prior_generator, current_generator, function_m, function_s):
             if total_records != 0:
                 si_cost += function_m(value, total_records)
             total_records += value
+
+        # Aggregate final cost.
 
         final_cost += si_cost
 
@@ -490,12 +461,12 @@ def do_test(args):
     # Calculate cost.
 
     cost = merge_distance(prior_generator, current_generator, function_m, function_s)
-
-    print(cost)
+    logging.info(message_info(103, cost))
 
     # Epilog.
 
     logging.info(exit_template(config))
+
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
