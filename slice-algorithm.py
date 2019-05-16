@@ -318,11 +318,10 @@ def common_prolog(config):
 
 
 def function_m(a, b):
-    return a * b
-
+    return max(a, b)
 
 def function_s(a, b):
-    return a * b
+    return max(a, b)
 
 
 def get_generator_from_csv(csv_filename):
