@@ -404,7 +404,7 @@ def merge_distance(prior_generator, current_generator, merge_cost_function, spli
         for key, value in partition_map.items():
             logging.info(message_info(106, key, value))
             if prior_generator_sizes[key] > value:
-                si_cost = si_cost + split_cost_function(value, prior_generator_sizes[key] - value)
+                si_cost += split_cost_function(value, prior_generator_sizes[key] - value)
             prior_generator_sizes[key] -= value
             logging.info(message_info(105, 'prior_generator_sizes', prior_generator_sizes))
 
